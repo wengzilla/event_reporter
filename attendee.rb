@@ -49,11 +49,23 @@ class Attendee < OpenStruct
   end
 
   def first_name
-    Name.clean(super)
+    Name.clean(super) unless super.nil?
   end
 
   def last_name
-    Name.clean(super)
+    Name.clean(super) unless super.nil?
+  end
+
+  def city
+    Name.clean(super) unless super.nil?
+  end
+
+  def street
+    Name.clean(super) unless super.nil?
+  end
+
+  def state
+    super.upcase unless super.nil?
   end
 
   def zipcode
@@ -69,10 +81,7 @@ class Attendee < OpenStruct
   end
 
   def to_s
-    line = Array.new
-    get_keys.each do |key| #self.class.headers
-      line << send(key)
-    end
+    line = get_keys.collect { |key| send(key) }
     line.join(' ')
   end
 end
