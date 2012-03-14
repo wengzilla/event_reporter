@@ -41,6 +41,7 @@ class EventReporter
     return queue_count if command[0] == "count" && command.length == 1
     return queue_clear if command[0] == "clear" && command.length == 1
     return queue_print if command[0] == "print" && command.length == 1
+    return queue_find(command[1..-1]) if command[0] == "find"
     if command[0] == "print" && command[1] == "by"
       return queue_print_by(command[2..-1])
     elsif command[0] == "save" && command[1] == "to" && command.length == 3
@@ -59,16 +60,12 @@ class EventReporter
   end
 
   def queue_print
-      queue_output
+    queue_output
   end
 
   def queue_print_by(field)
-    puts field
-    puts field.class
     sort_field = field.join('_')
-    puts sort_field
     sort_field = sort_field.to_sym
-    puts sort_field
     if field_valid?(sort_field)
       self.queue_res = queue_res.sort_by{ |a| a.send(sort_field) || "" }
       queue_output
@@ -101,28 +98,12 @@ class EventReporter
     # end
   end
 
-  def search(command) #takes a split array [field, criteria...]
-    field = command[0].strip
-    criteria = command[1..-1].join(' ').strip
-    search_res = Array.new
-
-    if field_valid?(field.to_sym)
-      manager.attendees.each do |a|
-        search_res << a if a.send(field.to_sym).to_s.downcase == criteria.downcase
-      end  
-      # debugger
-      search_res
-    else puts "Specified fields is invalid"
-    end
-  end
-
   def find(command)
     split_index = command.find_index{ |a| a =~ (/and|or/) }
     if split_index.nil? then self.queue_res = search(command)
-      # debugger
     else
       command_one, command_two = command_split(command,split_index)
-      case command[split_index]
+      case command[split_index] # uses recursion to search.
         when "and" then self.queue_res = find(command_one) & find(command_two)
         when "or"  then self.queue_res = find(command_one) | find(command_two)
         else raise "Error in find method case statement."
@@ -132,12 +113,6 @@ class EventReporter
 
   def queue_find(command)
 
-  end
-
-  def command_split(command, split_index)
-    #split an array on an index.
-    #e.g. command_split( [1, 2, 3], 1 ) => [[1],[3]]
-    [ command.slice(0..split_index - 1), command.slice(split_index + 1..-1) ]
   end
 
   def add(command)
@@ -224,6 +199,29 @@ class EventReporter
       puts "These are the following attributes: #{manager.headers.join(' ')}"
     end
   end
+
+  def command_split(command, split_index)
+    #split an array on an index.
+    #e.g. command_split( [1, 2, 3], 1 ) => [[1],[3]]
+    [ command.slice(0..split_index - 1), command.slice(split_index + 1..-1) ]
+  end
+
+  def search(command) #takes a split array [field, criteria...]
+    field = command[0].strip
+    criteria = command[1..-1].join(' ').strip
+
+    if field_valid?(field.to_sym)
+      manager.attendees.select{ |a| a if ostruct_match(a, field, criteria) }    
+    else puts "Specified fields is invalid"
+    end
+  end
+
+  def ostruct_match(ostruct, field, criteria)
+    if ostruct.send(field.to_sym).to_s.downcase == criteria.downcase
+      ostruct
+    end
+  end
+
 end
 
 reporter = EventReporter.new
