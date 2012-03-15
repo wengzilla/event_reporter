@@ -25,6 +25,10 @@ class PhoneNumber
     end
   end
 
+  def length
+    @phone_number.to_s.length
+  end
+
   def to_s
     "(#{@phone_number[0..2]}) #{@phone_number[3..5]}-#{@phone_number[6..-1]}"
   end
