@@ -1,11 +1,9 @@
 $LOAD_PATH << './'
 require 'csv'
 require 'attendee'
-require 'sunlight'
 
 class EventManager
   CSV_OPTIONS = {:headers => true, :header_converters => :symbol}
-  Sunlight::Base.api_key = "e179a6973728c4dd3fb1204283aaccb5"
 
   attr_accessor :attendees, :headers
 
@@ -37,17 +35,6 @@ class EventManager
     attendees.each do |attendee|
       output << attendee.get_keys if output.lineno == 0
       output << attendee.to_s
-    end
-  end
-
-  def rep_lookup
-    20.times do |i|
-      legs = Sunlight::Legislator.all_in_zipcode(attendees[i].zipcode)
-      names = legs.collect do |leg|
-        "#{leg.title} #{leg.firstname[0]}. #{leg.lastname} (#{leg.party})"
-      end
-
-      puts "#{attendees[i].full_name} #{attendees[i].zipcode},#{names.join(", ")}"
     end
   end
 
@@ -88,7 +75,8 @@ class EventManager
       else state_data[state] = state_data[state] + 1
       end
     end
-    ranks = state_data.sort_by{|state, counter| counter}.collect{|state, counter| state}.reverse
+    ranks_hash = state_data.sort_by{|state, counter| counter}
+    ranks = ranks_hash.collect{|state, counter| state}.reverse
     state_data = state_data.sort_by{|state, counter| state || ""}
     state_data.each do |state, counter|
       puts "#{state}:\t#{counter}\t(#{ranks.index(state) + 1})"
