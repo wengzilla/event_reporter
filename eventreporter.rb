@@ -1,10 +1,8 @@
 $LOAD_PATH.unshift('./')
-require "csv"
-require "sunlight"
-require "eventmanager"
 require "yaml"
-require "active_support"
 require "ruby-debug"
+require "eventmanager"
+require "output"
 
 class EventReporter
   attr_accessor :manager, :queue_res, :help_dict
@@ -46,8 +44,7 @@ class EventReporter
       return queue_print_by(command[2..-1])
     elsif command[0] == "save" && command[1] == "to" && command.length == 3
       return queue_save_to(command[2])
-    else
-      puts "queue #{command.join(' ')} not found."
+    else puts "queue #{command.join(' ')} not found."
     end
   end
 
@@ -57,6 +54,10 @@ class EventReporter
 
   def queue_clear
     self.queue_res = Array.new
+  end
+
+  def queue_find(command)
+    find(command, self.queue_res)
   end
 
   def queue_print
@@ -74,45 +75,31 @@ class EventReporter
     end
   end
 
-  def queue_save_to(filename="results.xml")
-    
-    type = filename.split('.').last
-    if OUTPUT_TYPES.include? type
-    else
-      puts "filename needs a valid extension: #{OUTPUT_TYPES.join(' ')}"
-    end
-    queue_res.each_with_index do |attendee, i|
-      puts attendee
-    end
-    # output = File.new(filename, "w")
-    #   queue_res.each_with_index do |attendee, i|
-    #     output << attendee.to_xml
-    #   end
-    # output.close
+  def queue_save_to(filename)
+    extension = filename.split('.').last
+    return unless filetype_valid?(extension)
+    scribe = Output.new(PRINT_HEADERS)
 
-    # if( type == "csv" )
-    # output = CSV.open(filename, "w")
-    # queue_res.each_with_index do |attendee, i|
-    #   output << PRINT_HEADERS.values if i == 0
-    #   output << PRINT_HEADERS.keys.collect { |k| "#{ attendee.send(k) }" }
-    # end
-  end
+    case extension
+      when 'xml'  then scribe.output_xml(filename, queue_res)
+      when 'json' then scribe.output_json(filename, queue_res)
+      when 'txt'  then scribe.output_txt(filename, queue_res)
+      when 'csv'  then scribe.output_csv(filename, queue_res)
+    end
 
-  def find(command)
+  def find(command, list = manager.attendees)
     split_index = command.find_index{ |a| a =~ (/and|or/) }
-    if split_index.nil? then self.queue_res = search(command)
+    if split_index.nil? then self.queue_res = search(command, list)
     else
       command_one, command_two = command_split(command,split_index)
       case command[split_index] # uses recursion to search.
-        when "and" then self.queue_res = find(command_one) & find(command_two)
-        when "or"  then self.queue_res = find(command_one) | find(command_two)
+        when "and"
+          self.queue_res = find(command_one, list) & find(command_two, list)
+        when "or"
+          self.queue_res = find(command_one, list) | find(command_two, list)
         else raise "Error in find method case statement."
       end
     end
-  end
-
-  def queue_find(command)
-
   end
 
   def add(command)
@@ -145,7 +132,10 @@ class EventReporter
     lengths = get_lengths()
     
     queue_res.each_with_index do |attendee, i|
-      print_headers(lengths) if i == 0
+      if i == 0
+        PRINT_HEADERS.each { |k, v| printf "#{ v.ljust( lengths[k] ) }\t" }
+        printf "\n"
+      end
       PRINT_HEADERS.keys.each do |field|
         value = attendee.send(field)
         printf "#{ value.ljust(lengths[field]) }\t" unless value.nil?
@@ -165,13 +155,6 @@ class EventReporter
         system("stty -raw echo")
       end
     end
-  end
-
-  def print_headers(lengths)
-    PRINT_HEADERS.each do |field, value| 
-      printf "#{ value.ljust( lengths[field] ) }\t"
-    end
-    printf "\n"
   end
 
   def get_lengths
@@ -195,7 +178,8 @@ class EventReporter
   def field_valid?(field)
     if manager.headers.include?(field)
       field
-    else puts "Sorry, attribute is unrecognizable"
+    else 
+      puts "Sorry, attribute is unrecognizable"
       puts "These are the following attributes: #{manager.headers.join(' ')}"
     end
   end
@@ -203,15 +187,17 @@ class EventReporter
   def command_split(command, split_index)
     #split an array on an index.
     #e.g. command_split( [1, 2, 3], 1 ) => [[1],[3]]
-    [ command.slice(0..split_index - 1), command.slice(split_index + 1..-1) ]
+    part_one = command.slice(0..split_index - 1)
+    part_two = command.slice(split_index + 1..-1)
+    [ part_one, part_two ]
   end
 
-  def search(command) #takes a split array [field, criteria...]
+  def search(command, list) #takes a split array [field, criteria...]
     field = command[0].strip
     criteria = command[1..-1].join(' ').strip
 
     if field_valid?(field.to_sym)
-      manager.attendees.select{ |a| a if ostruct_match(a, field, criteria) }    
+      list.select{ |a| a if ostruct_match(a, field, criteria) }    
     else puts "Specified fields is invalid"
     end
   end
@@ -222,23 +208,36 @@ class EventReporter
     end
   end
 
+  #check to see if filetype match the types in OUTPUT_TYPES
+  def filetype_valid?(extension) 
+    if OUTPUT_TYPES.include? extension
+      return true
+    else
+      puts "Output supports #{OUTPUT_TYPES.join(', ')} filetypes"
+      return false
+    end
+  end
+
 end
 
 reporter = EventReporter.new
 
-puts "Event Reporter: Active"
-inputs = Array.new
-while inputs.first != "quit"
-  printf "enter command > "
-  inputs = gets.strip.downcase.split(" ")
-  if inputs[0] != "quit"
-    reporter.execute_command(inputs)
-  else
-    #do_nothing
-  end
-end
+# puts "Event Reporter: Active"
+# inputs = Array.new
+# while inputs.first != "quit"
+#   printf "enter command > "
+#   inputs = gets.strip.downcase.split(" ")
+#   if inputs[0] != "quit"
+#     reporter.execute_command(inputs)
+#   else
+#     #do_nothing
+#   end
+# end
 
-# reporter.find(["zipcode", "00000"])
-# reporter.queue_save_to
+reporter.find(["zipcode", "00000"])
+reporter.queue_save_to("output.xml")
+reporter.queue_save_to("output.json")
+reporter.queue_save_to("output.txt")
+reporter.queue_save_to("output.csv")
 # reporter.queue_print_by(["last", "name"])
 #manager.state_stats
