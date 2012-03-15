@@ -167,6 +167,8 @@ class Queue
   end
 
   def ostruct_match(ostruct, field, criteria)
+    # criteria_arry = criteria.collect{|c| c.downcase}
+
     if ostruct.send(field.to_sym).to_s.downcase == criteria.downcase
       ostruct
     end
