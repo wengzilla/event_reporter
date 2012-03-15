@@ -159,6 +159,7 @@ class Queue
   def search(command, list) #takes a split array [field, criteria...]
     field = command[0].strip
     criteria = command[1..-1].join(' ').strip
+    criteria = criteria.gsub(/[()]/,'').strip.split(',')
 
     if field_valid?(field.to_sym)
       list.select{ |a| a if ostruct_match(a, field, criteria) }    
@@ -166,10 +167,10 @@ class Queue
     end
   end
 
-  def ostruct_match(ostruct, field, criteria)
-    # criteria_arry = criteria.collect{|c| c.downcase}
+  def ostruct_match(ostruct, field, criteria) #criteria is an array
+    criteria_arry = criteria.collect{|c| c.downcase.strip}
 
-    if ostruct.send(field.to_sym).to_s.downcase == criteria.downcase
+    if criteria_arry.include? ostruct.send(field.to_sym).to_s.downcase
       ostruct
     end
   end
