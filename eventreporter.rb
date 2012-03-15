@@ -86,6 +86,7 @@ class EventReporter
       when 'txt'  then scribe.output_txt(filename, queue_res)
       when 'csv'  then scribe.output_csv(filename, queue_res)
     end
+  end
 
   def find(command, list = manager.attendees)
     split_index = command.find_index{ |a| a =~ (/and|or/) }
