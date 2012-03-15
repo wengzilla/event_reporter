@@ -1,7 +1,7 @@
 class Queue
   attr_accessor :queue_res, :headers
-  PRINT_HEADERS = Hash[ :last_name => "LAST NAME", :first_name => "FIRST NAME", 
-    :email_address => "E-MAIL", :zipcode => "ZIPCODE", :city => "CITY", 
+  PRINT_HEADERS = Hash[ :last_name => "LAST NAME", :first_name => "FIRST NAME",
+    :email_address => "E-MAIL", :zipcode => "ZIPCODE", :city => "CITY",
     :state => "STATE", :street => "ADDRESS", :phone_number => "PHONE" ]
   OUTPUT_TYPES = [ "json", "txt", "xml", "csv"]
   PRINT_CONTINUES = [ "\r", "\s" ]
@@ -82,8 +82,8 @@ class Queue
       cmd_one, cmd_two = command_split(cmd,split_index)
       res_one = find(cmd_one, list)
       res_two = find(cmd_two, list)
-      if cmd[split_index] == "and" then self.queue_res = res_one & res_two 
-      elsif cmd[split_index] == "or" then self.queue_res = res_one | res_two 
+      if cmd[split_index] == "and" then self.queue_res = res_one & res_two
+      elsif cmd[split_index] == "or" then self.queue_res = res_one | res_two
       else raise "Error in find method case statement."
       end
     end
@@ -119,7 +119,7 @@ class Queue
 
   def get_lengths
     lengths = {}
-    PRINT_HEADERS.keys.each do |field| 
+    PRINT_HEADERS.keys.each do |field|
       lengths[field] = format_length(field)
     end
     lengths
@@ -138,9 +138,9 @@ class Queue
   def field_valid?(field)
     if PRINT_HEADERS.include?(field)
       field
-    else 
+    else
       puts "Sorry, attribute is unrecognizable"
-      puts "These are the following attributes: #{PRINT_HEADERS.keys.join(' ')}"
+      puts "These are acceptable attributes: #{PRINT_HEADERS.keys.join(' ')}"
     end
   end
 
@@ -158,7 +158,7 @@ class Queue
     criteria = criteria.gsub(/[()]/,'').strip.split(',')
 
     if field_valid?(field.to_sym)
-      list.select{ |a| a if ostruct_match(a, field, criteria) }    
+      list.select{ |a| a if ostruct_match(a, field, criteria) }
     else puts "Specified fields is invalid"
     end
   end
@@ -172,7 +172,7 @@ class Queue
   end
 
   #check to see if filetype match the types in OUTPUT_TYPES
-  def filetype_valid?(extension) 
+  def filetype_valid?(extension)
     if OUTPUT_TYPES.include? extension
       return true
     else

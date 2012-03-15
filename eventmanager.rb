@@ -47,7 +47,7 @@ class EventManager
         "#{leg.title} #{leg.firstname[0]}. #{leg.lastname} (#{leg.party})"
       end
 
-      puts "#{attendees[i].full_name} #{attendees[i].zipcode}, #{names.join(", ")}"
+      puts "#{attendees[i].full_name} #{attendees[i].zipcode},#{names.join(", ")}"
     end
   end
 

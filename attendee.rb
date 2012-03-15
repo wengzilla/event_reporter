@@ -73,7 +73,9 @@ class Attendee < OpenStruct
   end
 
   def zipcode
-    Zipcode.clean(super) #super calls the zipcode method of OpenStruct and returns zipcode
+    Zipcode.clean(super)
+    #super calls the zipcode method of OpenStruct
+    #and returns zipcode
   end
 
   def phone_number

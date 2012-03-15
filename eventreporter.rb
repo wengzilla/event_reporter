@@ -25,9 +25,9 @@ class EventReporter
   def help(command)
     if help_dict.keys.include? command.join(' ')
       puts "\n#{help_dict[command.join(' ')]}"
-    elsif command.empty? 
+    elsif command.empty?
       puts help_dict.keys.join(', ')
-    else 
+    else
       puts "#{command.join(' ')} not found"
     end
   end
@@ -50,7 +50,7 @@ class EventReporter
 
   def execute_command(command)
     if public_methods(false).grep(/^#{command[0]}$/).any?
-      self.send(command[0].to_sym,command[1..-1]) 
+      self.send(command[0].to_sym,command[1..-1])
     else
       puts "#{command.join(' ')} not found."
     end

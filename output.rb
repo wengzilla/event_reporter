@@ -23,7 +23,7 @@ class Output
   def output_txt(filename, list)
     CSV.open(filename, "w", {:col_sep => "\t"} ) do |f|
       f << headers.keys
-      list.each_with_index do |row, i|  
+      list.each_with_index do |row, i|
         f << headers.keys.collect { |k| "#{ row.send(k) }" }
       end
     end
