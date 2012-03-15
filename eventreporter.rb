@@ -41,11 +41,11 @@ class EventReporter
   end
 
   def add(command)
-    queue_manager.add(command)
+    queue_manager.add(command, manager.attendees)
   end
 
   def subtract(command)
-    queue_manager.subtract(command)
+    queue_manager.subtract(command, manager.attendees)
   end
 
   def execute_command(command)

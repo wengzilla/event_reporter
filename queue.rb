@@ -63,29 +63,28 @@ class Queue
     end
   end
 
-  def add(command)
+  def add(command, list)
     queue_temp = queue_res
-    execute_command(command)
+    find(command[1..-1], list)
     self.queue_res |= queue_temp
   end
 
-  def subtract(command)
+  def subtract(command, list)
     queue_temp = queue_res
-    execute_command(command)
-    self.queue_res = queue_temp - queue
+    find(command[1..-1], list)
+    self.queue_res = queue_temp - self.queue_res
   end
 
-  def find(command, list)
-    split_index = command.find_index{ |a| a =~ (/and|or/) }
-    if split_index.nil? then self.queue_res = search(command, list)
+  def find(cmd, list)
+    split_index = cmd.find_index{ |a| a =~ (/and|or/) }
+    if split_index.nil? then self.queue_res = search(cmd, list)
     else
-      command_one, command_two = command_split(command,split_index)
-      case command[split_index] # uses recursion to search.
-        when "and"
-          self.queue_res = find(command_one, list) & find(command_two, list)
-        when "or"
-          self.queue_res = find(command_one, list) | find(command_two, list)
-        else raise "Error in find method case statement."
+      cmd_one, cmd_two = command_split(cmd,split_index)
+      res_one = find(cmd_one, list)
+      res_two = find(cmd_two, list)
+      if cmd[split_index] == "and" then self.queue_res = res_one & res_two 
+      elsif cmd[split_index] == "or" then self.queue_res = res_one | res_two 
+      else raise "Error in find method case statement."
       end
     end
   end
@@ -94,14 +93,11 @@ class Queue
 
   def queue_output
     lengths = get_lengths()
-    
-    queue_res.each_with_index do |attendee, i|
-      if i == 0
-        PRINT_HEADERS.each { |k, v| printf "#{ v.ljust( lengths[k] ) }\t" }
-        printf "\n"
-      end
+    PRINT_HEADERS.each { |k, v| printf "#{ v.ljust( lengths[k] ) }\t" }
+    printf "\n"
+    queue_res.each_with_index do |a, i|
       PRINT_HEADERS.keys.each do |field|
-        value = attendee.send(field)
+        value = a.send(field)
         printf "#{ value.to_s.ljust(lengths[field]) }\t" unless value.nil?
       end
       printf "\n"
@@ -168,7 +164,7 @@ class Queue
   end
 
   def ostruct_match(ostruct, field, criteria) #criteria is an array
-    criteria_arry = criteria.collect{|c| c.downcase.strip}
+    criteria_arry = criteria.collect{ |c| c.downcase.strip }
 
     if criteria_arry.include? ostruct.send(field.to_sym).to_s.downcase
       ostruct
